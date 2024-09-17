@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using ECommerceMVC.Data;
 using ECommerceMVC.Helper;
+using ECommerceMVC.Helpers;
 using ECommerceMVC.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -46,10 +47,10 @@ namespace ECommerceMVC.Controllers
             }
             return View();
         }
-        #endregion Login
+		#endregion 
 
-        #region Đăng Nhập
-        [HttpGet]
+		#region Login
+		[HttpGet]
         public IActionResult DangNhap(string? ReturnURL)
         {
             ViewBag.ReturnURL = ReturnURL;
