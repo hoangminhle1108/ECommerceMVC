@@ -20,34 +20,76 @@ namespace ECommerceMVC.Controllers
             _mapper = mapper;
             db= context;
         }
-        #region Register
-        [HttpGet]
-        public IActionResult DangKy()
-        {
-            return View();
-        }
-        [HttpPost]
-        public IActionResult DangKy(RegisterVM model, IFormFile Hinh)
-        {
-            if (ModelState.IsValid)
-            {
-                var KhachHang = _mapper.Map<KhachHang>(model);
-                KhachHang.RandomKey=MyUtils.GenerateRamdomKey();
-                KhachHang.MatKhau = model.MatKhau.ToMd5Hash(KhachHang.RandomKey);
-                KhachHang.HieuLuc = true;
-                KhachHang.VaiTro = 0;
+		#region Register
+		[HttpGet]
+		public IActionResult DangKy()
+		{
+			return View();
+		}
 
-                if (Hinh != null)
-                {
-                    KhachHang.Hinh = MyUtils.UploadHinh(Hinh, "KhachHang");
-                }
-                db.Add(KhachHang);
-                db.SaveChanges();
-                return RedirectToAction("Index", "HangHoa");
-            }
-            return View();
-        }
-		#endregion 
+		[HttpPost]
+		public IActionResult DangKy(RegisterVM model, IFormFile Hinh)
+		{
+			if (ModelState.IsValid)
+			{
+				// Map the ViewModel to the entity
+				var KhachHang = _mapper.Map<KhachHang>(model);
+
+				// Generate Random Key and Hash Password
+				KhachHang.RandomKey = MyUtils.GenerateRamdomKey();
+				KhachHang.MatKhau = model.MatKhau.ToMd5Hash(KhachHang.RandomKey);
+				KhachHang.HieuLuc = true;
+				KhachHang.VaiTro = 0;
+
+				// Handle Image Upload (if provided)
+				if (Hinh != null)
+				{
+					try
+					{
+						KhachHang.Hinh = MyUtils.UploadHinh(Hinh, "KhachHang");
+					}
+					catch (Exception ex)
+					{
+						// Log the error and return view with error message
+						Console.WriteLine($"Image upload failed: {ex.Message}");
+						ModelState.AddModelError("", "Image upload failed. Please try again.");
+						return View(model);
+					}
+				}
+				else
+				{
+					// Set a default image or leave it null
+					KhachHang.Hinh = null; // Or set a default image path if required
+				}
+
+				try
+				{
+					// Save to database
+					db.Add(KhachHang);
+					db.SaveChanges();
+					return RedirectToAction("Index", "HangHoa");
+				}
+				catch (Exception ex)
+				{
+					// Log the error and return view with error message
+					Console.WriteLine($"Error saving to database: {ex.Message}");
+					ModelState.AddModelError("", "Registration failed. Please try again.");
+				}
+			}
+			else
+			{
+				// Log model validation errors
+				var errors = ModelState.Values.SelectMany(v => v.Errors);
+				foreach (var error in errors)
+				{
+					Console.WriteLine($"Model validation error: {error.ErrorMessage}");
+				}
+			}
+
+			// If we got this far, something failed, redisplay form
+			return View(model);
+		}
+		#endregion
 
 		#region Login
 		[HttpGet]
